@@ -261,11 +261,21 @@ const ICON = {
   x: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   back: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg>',
   fs: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
-  search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>'
+  search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+  download: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
+  shield: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>'
 };
 
 /* ---------- state ---------- */
-let KEY = store.get('sv_key', '');
+/* Paste YOUR TMDB API key (or Read Access Token) between the quotes below.
+   When this is set, visitors don't have to enter a key — the catalog loads automatically.
+   A visitor can still enter their own key (profile menu → Change TMDB key) to override it.
+   Note: any key in client-side JavaScript is visible to anyone who views the page source. */
+const BUILT_IN_KEY = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5YzM4ZGFiYzlhZWQxOTgwYzc2ZDMyODhjNGNlMWUwMyIsIm5iZiI6MTc5MTAyMzA1Ny40MTYsInN1YiI6IjZhYzBkN2QxNGZiOTYxYjY4NDU3OTA5MyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.9W3F24qWNdLtG_bDi05dlxttb3q386qTILOGauQ___4';
+let KEY = store.get('sv_key', '') || BUILT_IN_KEY;
+/* Ad-block / sandbox toggle for embed playback. Some embed servers detect the sandbox
+   and refuse to play — visitors can turn it off via the shield button in the player bar. */
+let ADBLOCK = store.get('sv_adblock', false);
 const REGIONS = {US:'United States',GB:'United Kingdom',CA:'Canada',AU:'Australia',IN:'India',IE:'Ireland',DE:'Germany',FR:'France',ES:'Spain',IT:'Italy',NL:'Netherlands',SE:'Sweden',NO:'Norway',DK:'Denmark',BR:'Brazil',MX:'Mexico',AR:'Argentina',JP:'Japan',KR:'South Korea',ZA:'South Africa',NG:'Nigeria',KE:'Kenya',EG:'Egypt',AE:'UAE',SA:'Saudi Arabia',TR:'Turkey',PH:'Philippines',ID:'Indonesia'};
 const guessRegion = () => { const r = (navigator.language || 'en-US').split('-')[1]; return REGIONS[r] ? r : 'US'; };
 let REGION = store.get('sv_region', guessRegion());
@@ -795,7 +805,7 @@ async function openDetails(type, id) {
   const upcoming = released && released > today();
   modal.innerHTML = `<button class="close" aria-label="Close">${ICON.x}</button>
     <div class="m-hero">${d.backdrop_path ? `<img src="${img(d.backdrop_path, 'w1280')}" alt="">` : ''}
-      <div class="m-hero-copy"><h2>${esc(title)}</h2><div class="btns" id="mbtns"><button class="btn green" id="mwatch">${ICON.play} Play ${type === 'tv' ? 'Series' : 'Movie'}</button><button class="btn grey" id="mplay">${ICON.play} Trailer</button></div></div></div>
+      <div class="m-hero-copy"><h2>${esc(title)}</h2><div class="btns" id="mbtns"><button class="btn green" id="mwatch">${ICON.play} Play ${type === 'tv' ? 'Series' : 'Movie'}</button><button class="btn grey" id="mplay">${ICON.play} Trailer</button><button class="btn grey" id="mdl" title="Download">${ICON.download} Download</button></div></div></div>
     <div class="m-body">
       <div class="m-top">
         <div>
@@ -831,6 +841,8 @@ async function openDetails(type, id) {
       openEmbed('movie', d.id, title);
     }
   };
+  // Download button — streaming titles can't be saved from the browser; point users to free Archive titles
+  $('#mdl', modal).onclick = () => toast('Download is only available for free "Plays here" titles. Open Free to Watch to browse them.');
 
   // where to watch
   const wp = d['watch/providers']?.results?.[REGION];
@@ -901,7 +913,7 @@ function openFree(doc) {
   const desc = plain(doc.description);
   const modal = openModal(`
     <div class="m-hero"><img src="https://archive.org/services/img/${esc(doc.identifier)}" alt="" style="object-fit:contain;background:#000">
-      <div class="m-hero-copy"><h2>${esc(doc.title)}</h2><div class="btns" id="fbtns"><button class="btn white" id="fplay">${ICON.play} Play Movie</button></div></div></div>
+      <div class="m-hero-copy"><h2>${esc(doc.title)}</h2><div class="btns" id="fbtns"><button class="btn white" id="fplay">${ICON.play} Play Movie</button><a class="btn grey" id="fdl" href="https://archive.org/download/${esc(doc.identifier)}" target="_blank" rel="noopener" title="Download MP4">${ICON.download} Download</a></div></div></div>
     <div class="m-body"><div><div class="meta"><span class="score">Free</span><span>${esc(doc.year || '')}</span><span class="cert">Full movie</span></div>
       <p style="color:#e4e4e7">${esc(desc.length > 900 ? desc.slice(0, 900) + '…' : desc || 'No description available.')}</p>
       <p class="small">Hosted by the Internet Archive. <a href="https://archive.org/details/${esc(doc.identifier)}" target="_blank" rel="noopener">View on archive.org</a></p></div></div>`);
@@ -914,18 +926,30 @@ function openFree(doc) {
     store.set(pkey('hist'), h.slice(0, 20));
     playFree(doc);
   };
+  // Resolve the direct MP4 file URL so the Download button saves the actual video
+  findArchiveFile(doc.identifier).then(file => {
+    const dl = $('#fdl', modal);
+    if (!dl || !file) return;
+    const src = `https://archive.org/download/${doc.identifier}/${file.name.split('/').map(encodeURIComponent).join('/')}`;
+    dl.href = src;
+    dl.setAttribute('download', (doc.title || 'movie').replace(/[^\w .-]/g, '') + '.mp4');
+    dl.title = 'Download ' + file.name;
+  });
 }
 const fmtTime = s => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = String(s % 60).padStart(2, '0'); return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`; };
 
-/* Plays the film's MP4 in our own player (with resume). Falls back to the Internet Archive's embedded player. */
-async function playFree(doc) {
-  const id = doc.identifier;
-  let file = null;
+/* Find the best-quality MP4 file inside an Internet Archive item (shared by play + download) */
+async function findArchiveFile(id) {
   try {
     const m = await fetch(`https://archive.org/metadata/${id}`).then(r => r.json());
     const mp4 = (m.files || []).filter(f => /\.mp4$/i.test(f.name) && !/sample|trailer/i.test(f.name));
-    file = mp4.find(f => /^h\.264$/i.test(f.format)) || mp4.find(f => /h\.264/i.test(f.format) && !/hd/i.test(f.format)) || mp4.find(f => /mpeg4/i.test(f.format)) || mp4[0] || null;
-  } catch {}
+    return mp4.find(f => /^h\.264$/i.test(f.format)) || mp4.find(f => /h\.264/i.test(f.format) && !/hd/i.test(f.format)) || mp4.find(f => /mpeg4/i.test(f.format)) || mp4[0] || null;
+  } catch { return null; }
+}
+/* Plays the film's MP4 in our own player (with resume). Falls back to the Internet Archive's embedded player. */
+async function playFree(doc) {
+  const id = doc.identifier;
+  const file = await findArchiveFile(id);
   if (!file) return openPlayer(`https://archive.org/embed/${id}?autoplay=1`, doc.title);
   const src = `https://archive.org/download/${id}/${file.name.split('/').map(encodeURIComponent).join('/')}`;
   openVideo(src, doc.title, id, () => openPlayer(`https://archive.org/embed/${id}?autoplay=1`, doc.title));
@@ -934,16 +958,32 @@ async function playFree(doc) {
 function playerShell(title, opts = {}) {
   closePlayer();
   const p = document.createElement('div'); p.className = 'player';
-  const sbar = opts.servers && opts.servers.length
+  const hasServers = opts.servers && opts.servers.length;
+  const sbar = hasServers
     ? `<div class="server-bar"><span class="lbl">Server:</span>${opts.servers.map((s, i) => `<button class="chip svc${i === 0 ? ' on' : ''}" data-s="${esc(s.id)}">${esc(s.name)}</button>`).join('')}</div>`
     : '';
-  p.innerHTML = `<div class="player-bar"><button class="icon-btn" data-a="back" aria-label="Back">${ICON.back}</button><b></b><button class="icon-btn" data-a="fs" aria-label="Fullscreen" title="Fullscreen" style="margin-left:auto">${ICON.fs}</button></div>${sbar}`;
+  const abtn = hasServers
+    ? `<button class="icon-btn${ADBLOCK ? ' on' : ''}" data-a="ab" aria-label="Toggle ad-block" title="Ad-block: ${ADBLOCK ? 'ON' : 'OFF'}" style="margin-left:auto">${ICON.shield}</button>`
+    : '';
+  const fsStyle = hasServers ? '' : 'margin-left:auto';
+  p.innerHTML = `<div class="player-bar"><button class="icon-btn" data-a="back" aria-label="Back">${ICON.back}</button><b></b>${abtn}<button class="icon-btn" data-a="fs" aria-label="Fullscreen" title="Fullscreen" style="${fsStyle}">${ICON.fs}</button></div>${sbar}`;
   $('b', p).textContent = title;
   $('[data-a=back]', p).onclick = closePlayer;
   $('[data-a=fs]', p).onclick = () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     else (p.requestFullscreen ? p.requestFullscreen() : Promise.reject()).catch(() => toast('Fullscreen is not available in this browser. Use the player\'s own fullscreen button.'));
   };
+  if (hasServers) {
+    $('[data-a=ab]', p).onclick = () => {
+      ADBLOCK = !ADBLOCK;
+      store.set('sv_adblock', ADBLOCK);
+      const btn = $('[data-a=ab]', p);
+      btn.classList.toggle('on', ADBLOCK);
+      btn.title = 'Ad-block: ' + (ADBLOCK ? 'ON' : 'OFF');
+      if (p._src) setPlayerSrc(p, p._src);
+      toast(ADBLOCK ? 'Ad-block ON — if the video says "remove sandbox", turn it off.' : 'Ad-block OFF — reload the video if needed.');
+    };
+  }
   if (opts.onServer) {
     p.querySelectorAll('.server-bar .chip').forEach(c => c.onclick = () => {
       p.querySelectorAll('.server-bar .chip').forEach(x => x.classList.toggle('on', x === c));
@@ -956,7 +996,11 @@ function playerShell(title, opts = {}) {
 /* Replace the current iframe/video inside a player with a new source (used when switching servers) */
 function setPlayerSrc(p, src) {
   p.querySelectorAll('iframe, video').forEach(el => el.remove());
-  p.insertAdjacentHTML('beforeend', `<iframe src="${esc(src)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="origin"></iframe>`);
+  /* When ADBLOCK is on, sandbox locks the embed: scripts + same-origin so the video plays,
+     but NO popups, NO top-navigation, NO modals — blocks pop-up ads, redirects, fake alerts.
+     Some embed servers detect sandbox and refuse to play; toggle it off via the shield button. */
+  const sandbox = ADBLOCK ? ' sandbox="allow-scripts allow-same-origin"' : '';
+  p.insertAdjacentHTML('beforeend', `<iframe src="${esc(src)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="origin"${sandbox}></iframe>`);
 }
 /* Open a movie or TV episode using embed streaming servers, with a server selector in the player bar */
 function openEmbed(type, id, title, season, episode) {
@@ -968,10 +1012,11 @@ function openEmbed(type, id, title, season, episode) {
   const label = title + (type === 'tv' ? ` · S${season} E${episode}` : '');
   const p = playerShell(label, {
     servers: list,
-    onServer: sid => { setPlayerSrc(p, buildSrc(sid)); toast('Switched server — if it still won\'t load, try another.'); }
+    onServer: sid => { p._src = buildSrc(sid); setPlayerSrc(p, p._src); toast('Switched server — if it still won\'t load, try another or toggle the shield off.'); }
   });
-  setPlayerSrc(p, buildSrc(list[0].id));
-  toast('If the video doesn\'t load, pick another server in the bar above.');
+  p._src = buildSrc(list[0].id);
+  setPlayerSrc(p, p._src);
+  toast(ADBLOCK ? 'Ad-block is ON. If the video won\'t load, tap the shield to turn it off.' : 'If the video won\'t load, try another server.');
 }
 function openPlayer(src, title) {
   const p = playerShell(title);
