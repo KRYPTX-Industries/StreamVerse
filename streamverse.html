@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>StreamVerse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-bleed cinematic hero, then horizontally scrolling poster rows; modal for details, overlay player */
+:root{
+  --bg:#09090b;--bg2:#141418;--bg3:#202027;--fg:#f5f5f7;--muted:#a3a3ad;--line:#2b2b33;
+  --red:#e50914;--red-2:#b8070f;--good:#46d369;
+  --display:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --gutter:clamp(16px,4vw,56px);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+body{min-height:100vh;overflow-x:hidden}
+img{max-width:100%;display:block}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid #fff;outline-offset:2px}
+[hidden]{display:none!important}
+.pad{padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}
+
+/* Logo */
+.logo{font-family:var(--display);font-weight:800;letter-spacing:.02em;color:var(--red);font-size:1.6rem;text-decoration:none;white-space:nowrap;text-transform:uppercase}
+.logo span{color:var(--fg)}
+
+/* Nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;gap:28px;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:14px;background:linear-gradient(#000c,#0000);transition:background .3s}
+.nav.solid{background:var(--bg)}
+.nav-links{display:flex;gap:20px;list-style:none;margin:0;padding:0}
+.nav-links a{text-decoration:none;color:#ddd;font-size:.92rem;white-space:nowrap}
+.nav-links a:hover{color:#fff}
+.nav-links a.on{color:#fff;font-weight:600}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.search{display:flex;align-items:center;gap:6px;background:#000a;border:1px solid #fff4;border-radius:4px;padding:6px 10px;width:min(260px,40vw)}
+.search svg{flex:none;opacity:.8}
+.search input{background:none;border:0;outline:0;width:100%;min-width:0}
+.region{background:#000a;border:1px solid #fff3;border-radius:4px;padding:6px 6px}
+.avatar{width:34px;height:34px;border-radius:5px;display:grid;place-items:center;font-weight:700;font-family:var(--display);border:0;flex:none}
+.menu{position:absolute;right:max(var(--gutter),env(safe-area-inset-right,0px));top:calc(64px + env(safe-area-inset-top,0px));background:#000e;border:1px solid var(--line);border-radius:6px;min-width:220px;padding:6px;display:flex;flex-direction:column}
+.menu button{background:none;border:0;text-align:left;padding:10px 12px;border-radius:4px;display:flex;gap:10px;align-items:center}
+.menu button:hover{background:var(--bg3)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:6px 0;width:100%}
+
+/* Hero */
+.hero{position:relative;min-height:min(80vh,760px);display:flex;align-items:flex-end;overflow:hidden;background:var(--bg2)}
+.hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s}
+.hero-bg.show{opacity:1}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#000d 0%,#0008 40%,#0000 70%),linear-gradient(0deg,var(--bg) 0%,#0000 35%)}
+.hero-copy{position:relative;z-index:2;max-width:620px;padding-bottom:clamp(60px,12vh,140px);padding-top:120px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.14em;font-size:.75rem;font-weight:700;color:#ddd}
+.eyebrow b{background:var(--red);color:#fff;padding:2px 6px;border-radius:2px;letter-spacing:.06em}
+.hero h1{font-family:var(--display);font-size:clamp(2.2rem,5.5vw,4.2rem);line-height:1;margin:14px 0;text-wrap:balance}
+.hero p{color:#e4e4e7;font-size:clamp(.95rem,1.4vw,1.1rem);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0 0 22px}
+.meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:var(--muted);font-size:.9rem}
+.meta .score{color:var(--good);font-weight:700}
+.meta .cert{border:1px solid #fff6;padding:0 6px;border-radius:2px;color:#ddd;font-size:.8rem}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:5px;padding:10px 22px;font-weight:700;font-size:1rem;text-decoration:none}
+.btn.white{background:#fff;color:#000}
+.btn.white:hover{background:#ffffffc8}
+.btn.grey{background:#6d6d7299;color:#fff}
+.btn.grey:hover{background:#6d6d7266}
+.btn.red{background:var(--red);color:#fff}
+.btn.red:hover{background:var(--red-2)}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:2px solid #fff8;background:#2a2a2fcc;display:grid;place-items:center;flex:none}
+.icon-btn:hover{border-color:#fff}
+.icon-btn.on{background:#fff;color:#000;border-color:#fff}
+.dots{position:absolute;z-index:3;right:max(var(--gutter),env(safe-area-inset-right,0px));bottom:clamp(60px,12vh,140px);display:flex;gap:6px}
+.dots button{width:22px;height:4px;border:0;border-radius:2px;background:#fff5;padding:0}
+.dots button.on{background:#fff}
+
+/* Rows */
+main{min-height:60vh}
+.rows{position:relative;z-index:3;margin-top:-60px;display:flex;flex-direction:column;gap:34px;padding-bottom:40px}
+.row h2{font-family:var(--display);font-size:clamp(1.05rem,1.6vw,1.35rem);margin:0 0 10px;font-weight:700}
+.track-wrap{position:relative;margin:0 calc(-1 * max(var(--gutter),env(safe-area-inset-left,0px))) 0 calc(-1 * max(var(--gutter),env(safe-area-inset-left,0px)))}
+.track{display:flex;gap:8px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;padding:10px max(var(--gutter),env(safe-area-inset-left,0px));scroll-padding:0 var(--gutter)}
+.track::-webkit-scrollbar{display:none}
+.arrow{position:absolute;top:10px;bottom:10px;width:var(--gutter);min-width:36px;border:0;background:#000a;z-index:5;opacity:0;transition:opacity .2s;font-size:2rem;display:grid;place-items:center}
+.arrow.l{left:0}.arrow.r{right:0}
+.track-wrap:hover .arrow{opacity:1}
+@media (hover:none){.arrow{display:none}}
+
+/* Cards */
+.card{position:relative;flex:none;width:clamp(120px,14vw,190px);aspect-ratio:2/3;border:0;padding:0;border-radius:6px;overflow:hidden;background:var(--bg3);transition:transform .25s,box-shadow .25s;text-align:left}
+.card img{width:100%;height:100%;object-fit:cover}
+.card:hover,.card:focus-visible{transform:scale(1.07);z-index:4;box-shadow:0 10px 30px #000c}
+.card .info{position:absolute;inset:auto 0 0 0;padding:28px 10px 10px;background:linear-gradient(#0000,#000e);opacity:0;transition:opacity .2s;display:flex;flex-direction:column;gap:2px}
+.card:hover .info,.card:focus-visible .info{opacity:1}
+.card .info b{font-size:.85rem;line-height:1.2}
+.card .info span{font-size:.75rem;color:var(--muted)}
+.card .info .score{color:var(--good);font-weight:700}
+.noimg{width:100%;height:100%;display:grid;place-items:center;padding:12px;text-align:center;font-family:var(--display);font-weight:700;background:linear-gradient(160deg,#2a2a33,#121216);color:#ccc}
+.badge{position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:.65rem;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:2px;text-transform:uppercase}
+.badge.free{background:#17994a}
+.btn.green{background:#17994a;color:#fff}
+.btn.green:hover{background:#127a3b}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto;scrollbar-width:none}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab.on{color:var(--fg);border-bottom-color:var(--red)}
+.card.wide{aspect-ratio:16/9;width:clamp(220px,24vw,320px)}
+.card.wide .info{opacity:1}
+.card.top{width:clamp(170px,19vw,250px);aspect-ratio:auto;height:auto;background:none;display:flex;align-items:flex-end;overflow:visible}
+.card.top .num{font-family:var(--display);font-weight:800;font-size:clamp(5rem,9vw,8.5rem);line-height:.8;color:var(--bg);-webkit-text-stroke:3px #777;margin-right:-14px;letter-spacing:-.06em}
+.card.top .p{width:60%;aspect-ratio:2/3;border-radius:6px;overflow:hidden;position:relative;z-index:1;background:var(--bg3)}
+.card.top .p img{height:100%;object-fit:cover}
+.skel{flex:none;width:clamp(120px,14vw,190px);aspect-ratio:2/3;border-radius:6px;background:linear-gradient(100deg,var(--bg2) 30%,var(--bg3) 50%,var(--bg2) 70%);background-size:300% 100%;animation:sh 1.4s infinite}
+.skel.wide{aspect-ratio:16/9;width:clamp(220px,24vw,320px)}
+@keyframes sh{to{background-position:-150% 0}}
+
+/* Page views */
+.page{padding-top:calc(100px + env(safe-area-inset-top,0px));padding-bottom:40px}
+.page-head{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;margin-bottom:22px}
+.page-head h1{font-family:var(--display);font-size:clamp(1.6rem,3vw,2.4rem);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.chip{background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.85rem}
+.chip:hover{border-color:#fff6}
+.chip.on{background:var(--fg);color:#000;border-color:var(--fg);font-weight:600}
+.select{background:var(--bg2);border:1px solid var(--line);border-radius:4px;padding:7px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px 10px}
+.grid .card{width:100%}
+.grid.wide{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.grid.wide .card{width:100%}
+.sentinel{height:40px}
+.empty{color:var(--muted);padding:40px 0;text-align:center}
+.notice{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:22px;max-width:640px}
+.notice h3{font-family:var(--display);margin:0 0 6px}
+
+/* Modal */
+.modal-back{position:fixed;inset:0;z-index:60;background:#000b;overflow-y:auto;padding:calc(30px + env(safe-area-inset-top,0px)) 12px 40px;display:flex;justify-content:center;align-items:flex-start}
+.modal{position:relative;width:min(900px,100%);background:var(--bg2);border-radius:10px;overflow:hidden;box-shadow:0 20px 60px #000;animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.96);opacity:0}}
+.m-hero{position:relative;aspect-ratio:16/9;max-height:480px;width:100%;background:var(--bg3)}
+.m-hero img{width:100%;height:100%;object-fit:cover}
+.m-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,var(--bg2) 2%,#0000 60%)}
+.m-hero-copy{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:0 clamp(16px,4vw,44px) 22px}
+.m-hero-copy h2{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.8rem);line-height:1.05;margin:0 0 14px;text-wrap:balance}
+.close{position:absolute;top:14px;right:14px;z-index:5;width:38px;height:38px;border-radius:50%;border:0;background:#181818;display:grid;place-items:center}
+.m-body{padding:8px clamp(16px,4vw,44px) 36px;display:flex;flex-direction:column;gap:28px}
+.m-top{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:28px}
+@media (max-width:640px){.m-top{grid-template-columns:1fr}}
+.m-top p{margin:12px 0 0;color:#e4e4e7}
+.kv{font-size:.88rem;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+.kv b{color:#888;font-weight:500}
+.kv span{color:#ddd}
+.m-body h3{font-family:var(--display);font-size:1.25rem;margin:0 0 12px}
+.providers{display:flex;flex-direction:column;gap:14px}
+.prov-group{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.prov-group > span{width:80px;color:var(--muted);font-size:.85rem}
+.prov{display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:8px;padding:5px 10px 5px 5px;text-decoration:none;font-size:.85rem}
+.prov:hover{background:#2c2c35}
+.prov img{width:32px;height:32px;border-radius:6px}
+.small{font-size:.78rem;color:var(--muted)}
+.cast{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.person{flex:none;width:92px;text-align:center;font-size:.8rem}
+.person .ph{width:80px;height:80px;margin:0 auto 6px;border-radius:50%;overflow:hidden;background:var(--bg3);display:grid;place-items:center;font-family:var(--display);font-size:1.4rem;color:#777}
+.person .ph img{width:100%;height:100%;object-fit:cover}
+.person i{display:block;color:var(--muted);font-style:normal}
+.ep-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.ep-head h3{margin:0}
+.eps{display:flex;flex-direction:column}
+.ep{display:grid;grid-template-columns:32px 150px minmax(0,1fr);gap:16px;align-items:center;padding:16px 10px;border-bottom:1px solid var(--line);border-radius:4px}
+.ep:first-child{background:var(--bg3)}
+.ep .n{font-size:1.4rem;color:var(--muted);text-align:center}
+.ep .st{aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:var(--bg3);cursor:pointer;position:relative}
+.ep .st::after{content:"▶";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:1.4rem;background:#0006;opacity:0;transition:opacity .2s;pointer-events:none}
+.ep .st:hover::after,.ep .st:focus-visible::after{opacity:1}
+.ep .st img{width:100%;height:100%;object-fit:cover}
+.ep h4{margin:0 0 4px;display:flex;justify-content:space-between;gap:10px;font-size:.95rem}
+.ep h4 span{color:var(--muted);font-weight:400;white-space:nowrap}
+.ep p{margin:0;color:var(--muted);font-size:.85rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:560px){.ep{grid-template-columns:110px minmax(0,1fr)}.ep .n{display:none}}
+.more{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.more .card{width:100%}
+
+/* Player */
+.player{position:fixed;inset:0;z-index:80;background:#000;display:flex;flex-direction:column}
+.player-bar{display:flex;align-items:center;gap:14px;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+.player-bar b{font-family:var(--display);font-size:1.1rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.player iframe,.player video{flex:1;width:100%;min-height:0;border:0;background:#000}
+.prog{position:absolute;left:10px;right:10px;bottom:6px;height:3px;background:#ffffff40;border-radius:2px;z-index:2}
+.prog i{display:block;height:100%;background:var(--red);border-radius:2px}
+.card.wide .info{padding-bottom:14px}
+.chip.svc{border-color:#17994a88}
+.chip.svc.on{background:#17994a;border-color:#17994a;color:#fff}
+.server-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg2);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex:none}
+.server-bar::-webkit-scrollbar{display:none}
+.server-bar .lbl{color:var(--muted);font-size:.8rem;white-space:nowrap;flex:none;margin-right:4px}
+.server-bar .chip{padding:5px 12px;font-size:.8rem;white-space:nowrap;flex:none}
+
+/* Gate screens */
+.gate{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding-block:60px;text-align:center;background:radial-gradient(ellipse at top,#3a0508 0%,var(--bg) 60%)}
+.gate h1{font-family:var(--display);font-size:clamp(1.8rem,4vw,3rem);margin:0;text-wrap:balance}
+.gate p{color:var(--muted);max-width:56ch;margin:0 auto}
+.keybox{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;width:min(560px,100%)}
+.keybox input{flex:1 1 260px;min-width:0;background:#000a;border:1px solid #fff4;border-radius:5px;padding:12px 14px}
+.steps{text-align:left;background:#0009;border:1px solid var(--line);border-radius:8px;padding:18px 22px 18px 38px;max-width:560px;color:#d4d4d8;font-size:.92rem;margin:0}
+.steps li{margin:4px 0}
+.err{color:#ff6b6b;min-height:1.2em;margin:0}
+.profiles{display:flex;flex-wrap:wrap;justify-content:center;gap:24px}
+.prof{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--muted);width:120px}
+.prof .avatar{width:110px;height:110px;font-size:2.8rem;border-radius:8px;border:3px solid transparent}
+.prof:hover{color:#fff}.prof:hover .avatar{border-color:#fff}
+.prof.add .avatar{background:none;border:2px dashed #666;color:#999}
+.prof .del{font-size:.75rem;color:#ff8080;background:none;border:0}
+
+/* Toast + footer */
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:99;background:#fff;color:#000;padding:10px 18px;border-radius:6px;font-weight:600;box-shadow:0 8px 30px #000a;max-width:calc(100vw - 32px)}
+footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--muted);font-size:.8rem;display:flex;flex-direction:column;gap:6px}
+footer a{color:#ccc}
+
+@media (max-width:860px){
+  .nav{flex-wrap:wrap;gap:10px 16px}
+  .nav-links{order:3;width:100%;overflow-x:auto;scrollbar-width:none;gap:16px}
+  .nav-links::-webkit-scrollbar{display:none}
+  .search{width:auto;flex:1}
+  .nav-right{flex:1;justify-content:flex-end}
+  .rows{margin-top:-30px}
+  .page{padding-top:calc(130px + env(safe-area-inset-top,0px))}
+  .hero-copy{padding-top:150px}
+}
+@media (max-width:480px){.region{display:none}.btn{padding:9px 16px}.dots{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.track{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layer"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+'use strict';
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const yearOf = it => (it.release_date || it.first_air_date || '').slice(0, 4);
+const today = () => new Date().toISOString().slice(0, 10);
+let toastTimer;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 2800); }
+const ICON = {
+  play: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>',
+  info: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+  plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>',
+  check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12l5 5 9-10"/></svg>',
+  up: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H4v-9zM7 11l4-8c1.5 0 2.5 1 2.5 2.5V9h5.2a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.5 20H7"/></svg>',
+  down: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h3v9zM17 13l-4 8c-1.5 0-2.5-1-2.5-2.5V15H5.3a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.5 4H17"/></svg>',
+  x: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  back: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg>',
+  fs: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+  search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>'
+};
+
+/* ---------- state ---------- */
+let KEY = store.get('sv_key', '');
+const REGIONS = {US:'United States',GB:'United Kingdom',CA:'Canada',AU:'Australia',IN:'India',IE:'Ireland',DE:'Germany',FR:'France',ES:'Spain',IT:'Italy',NL:'Netherlands',SE:'Sweden',NO:'Norway',DK:'Denmark',BR:'Brazil',MX:'Mexico',AR:'Argentina',JP:'Japan',KR:'South Korea',ZA:'South Africa',NG:'Nigeria',KE:'Kenya',EG:'Egypt',AE:'UAE',SA:'Saudi Arabia',TR:'Turkey',PH:'Philippines',ID:'Indonesia'};
+const guessRegion = () => { const r = (navigator.language || 'en-US').split('-')[1]; return REGIONS[r] ? r : 'US'; };
+let REGION = store.get('sv_region', guessRegion());
+const COLORS = ['#e50914','#2b7de9','#f5a623','#21a366','#9b51e0','#e84393'];
+let profiles = store.get('sv_profiles', [{ id: 'p1', name: 'You', color: COLORS[0] }]);
+let profile = null;
+const pkey = k => `sv_${k}_${profile.id}`;
+const myList = () => store.get(pkey('list'), []);
+const ratings = () => store.get(pkey('rate'), {});
+const history = () => store.get(pkey('hist'), []);
+const progress = () => store.get(pkey('prog'), {});
+
+/* ---------- data sources ---------- */
+const API = 'https://api.themoviedb.org/3', IMG = 'https://image.tmdb.org/t/p/';
+const cache = new Map();
+function tmdb(path, params = {}) {
+  if (!KEY) return Promise.reject(Object.assign(new Error('no_key'), { code: 'no_key' }));
+  const u = new URL(API + path);
+  u.searchParams.set('language', 'en-US');
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') u.searchParams.set(k, v);
+  const headers = { accept: 'application/json' };
+  if (KEY.startsWith('eyJ')) headers.Authorization = 'Bearer ' + KEY; else u.searchParams.set('api_key', KEY);
+  const ck = u.toString();
+  if (cache.has(ck)) return cache.get(ck);
+  const p = fetch(ck, { headers }).then(r => {
+    if (!r.ok) throw Object.assign(new Error('http ' + r.status), { code: r.status === 401 ? 'bad_key' : 'http' });
+    return r.json();
+  });
+  cache.set(ck, p); p.catch(() => cache.delete(ck));
+  return p;
+}
+const img = (p, size = 'w342') => p ? IMG + size + esc(p) : '';
+
+/* Internet Archive categories. Values go inside collection:( … ); both name spellings are listed because collection names are case-sensitive. */
+const FREE_COLLECTIONS = [
+  ['feature_films', 'Popular Movies'],
+  ['Film_Noir OR film_noir', 'Film Noir'],
+  ['SciFi_Horror OR scifi_horror', 'Sci-Fi & Horror'],
+  ['Comedy_Films OR comedy_films', 'Comedy'],
+  ['feature_films) AND subject:(western OR westerns', 'Westerns'],
+  ['feature_films) AND subject:(action OR adventure OR "martial arts"', 'Action & Adventure'],
+  ['feature_films) AND subject:(drama OR romance', 'Drama & Romance'],
+  ['classic_tv OR Classic_TV', 'Classic TV'],
+  ['classic_cartoons OR Classic_Cartoons', 'Cartoons'],
+  ['silent_films OR Silent_Films', 'Silent Era'],
+  ['documentaries OR Documentaries', 'Documentaries']
+];
+/* Titles that are legally free (with or without ads) on streaming services in the chosen country */
+const freeParams = () => ({ watch_region: REGION, with_watch_monetization_types: 'free|ads', sort_by: 'popularity.desc' });
+function makeFreeTmdbCard(it, type) {
+  const c = makeCard(it, type); if (!c) return null;
+  const b = c.querySelector('.badge'); if (b) b.remove();
+  c.insertAdjacentHTML('beforeend', '<span class="badge free">Free</span>');
+  return c;
+}
+/* Direct search links for free services where the URL pattern is known; others go to the TMDB watch page */
+const FREE_SEARCH = {
+  'Tubi TV': t => 'https://tubitv.com/search/' + encodeURIComponent(t),
+  'Tubi': t => 'https://tubitv.com/search/' + encodeURIComponent(t),
+  'Plex': t => 'https://watch.plex.tv/search?q=' + encodeURIComponent(t),
+  'YouTube': t => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(t + ' full movie')
+};
+/* Embed streaming servers — free movie/series embeds keyed by TMDB id. If one is down or slow, the user can switch in the player bar. */
+const SERVERS = {
+  movie: [
+    { id: 'vidsrc',    name: 'VidSrc',     url: id => `https://vidsrc.xyz/embed/movie/${id}` },
+    { id: 'vidsrc2',   name: 'VidSrc 2',   url: id => `https://vidsrc.xyz/vshembed/movie/${id}` },
+    { id: '2embed',    name: '2Embed',     url: id => `https://www.2embed.cc/embed/${id}` },
+    { id: '2embedorg', name: '2Embed.org', url: id => `https://2embed.org/embed/${id}` },
+    { id: 'superembed',name: 'SuperEmbed', url: id => `https://multiembed.mov/?video_id=${id}` },
+    { id: 'embedsu',   name: 'EmbedSu',    url: id => `https://embedsu.com/embed/movie/${id}` }
+  ],
+  tv: [
+    { id: 'vidsrc',    name: 'VidSrc',     url: (id, s, e) => `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` },
+    { id: 'vidsrc2',   name: 'VidSrc 2',   url: (id, s, e) => `https://vidsrc.xyz/vshembed/tv/${id}/${s}/${e}` },
+    { id: '2embed',    name: '2Embed',     url: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
+    { id: 'superembed',name: 'SuperEmbed', url: (id, s, e) => `https://multiembed.mov/?video_id=${id}&s=${s}&e=${e}` }
+  ]
+};
+function archive({ collection = 'feature_films', q = '', page = 1, rows = 36 } = {}) {
+  let query = `collection:(${collection}) AND mediatype:(movies)`;
+  const clean = q.replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
+  if (clean) query += ` AND title:(${clean})`;
+  const u = new URL('https://archive.org/advancedsearch.php');
+  u.searchParams.set('q', query);
+  ['identifier', 'title', 'year', 'description', 'downloads'].forEach(f => u.searchParams.append('fl[]', f));
+  u.searchParams.append('sort[]', 'downloads desc');
+  u.searchParams.set('rows', rows); u.searchParams.set('page', page); u.searchParams.set('output', 'json');
+  const ck = u.toString();
+  if (cache.has(ck)) return cache.get(ck);
+  const p = fetch(ck).then(r => { if (!r.ok) throw new Error('archive'); return r.json(); })
+    .then(j => ({ items: j.response.docs.filter(d => /^[\w.\-]+$/.test(d.identifier)), total: Math.ceil(j.response.numFound / rows) }));
+  cache.set(ck, p); p.catch(() => cache.delete(ck));
+  return p;
+}
+const plain = html => { const d = new DOMParser().parseFromString(Array.isArray(html) ? html.join(' ') : String(html || ''), 'text/html'); return (d.body.textContent || '').replace(/\s+/g, ' ').trim(); };
+
+function handleErr(e) {
+  if (e && e.code === 'bad_key') { toast('Your TMDB key was rejected. Please enter it again.'); KEY = ''; store.set('sv_key', ''); setTimeout(showSetup, 600); }
+  else if (e && e.code === 'no_key') {}
+  else { console.warn(e); toast('Could not load some titles. Check your connection.'); }
+}
+
+/* ---------- gate screens ---------- */
+function showSetup(msg = '') {
+  closeModal(); closePlayer();
+  $('#app').innerHTML = `
+  <div class="gate pad">
+    <div class="logo" style="font-size:2.6rem">Stream<span>Verse</span></div>
+    <h1>Every movie and series, all in one place.</h1>
+    <p>StreamVerse gets its catalog from TMDB, so new releases show up as soon as they are announced. To connect it, paste your free TMDB API key.</p>
+    <form class="keybox" id="keyform">
+      <input id="keyinput" placeholder="Paste your TMDB API key or read access token" autocomplete="off" spellcheck="false" aria-label="TMDB API key">
+      <button class="btn red" type="submit">Start watching</button>
+    </form>
+    <p class="err" id="keyerr">${esc(msg)}</p>
+    <ol class="steps">
+      <li>Create a free account at <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org</a>.</li>
+      <li>Open <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Settings → API</a> and request a key (choose "Developer", personal use).</li>
+      <li>Copy the <b>API Key</b> or <b>API Read Access Token</b> and paste it above. It is saved only in this browser.</li>
+    </ol>
+    <button class="btn grey" id="skip">Watch free movies without a key</button>
+  </div>`;
+  $('#keyform').onsubmit = async e => {
+    e.preventDefault();
+    const k = $('#keyinput').value.trim();
+    if (!k) return ($('#keyerr').textContent = 'Paste your key first.');
+    $('#keyerr').textContent = 'Checking your key…';
+    KEY = k;
+    try { await tmdb('/configuration'); store.set('sv_key', k); boot(); }
+    catch (err) { KEY = ''; $('#keyerr').textContent = err.code === 'bad_key' ? 'TMDB rejected that key. Copy it again from Settings → API.' : 'Could not reach TMDB. Check your internet connection and try again.'; }
+  };
+  $('#skip').onclick = () => { store.set('sv_skipkey', true); boot(); };
+}
+
+function showProfiles(manage = false) {
+  closeModal();
+  $('#app').innerHTML = `
+  <div class="gate pad">
+    <div class="logo">Stream<span>Verse</span></div>
+    <h1>${manage ? 'Manage profiles' : "Who's watching?"}</h1>
+    <div class="profiles" id="plist"></div>
+    <button class="btn grey" id="pmanage">${manage ? 'Done' : 'Manage profiles'}</button>
+  </div>`;
+  const list = $('#plist');
+  profiles.forEach(p => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px';
+    const b = document.createElement('button'); b.className = 'prof';
+    b.innerHTML = `<span class="avatar" style="background:${p.color}">${esc(p.name[0]?.toUpperCase() || '?')}</span><span></span>`;
+    b.lastChild.textContent = p.name;
+    b.onclick = () => { profile = p; store.set('sv_last', p.id); boot(true); };
+    wrap.appendChild(b);
+    if (manage && profiles.length > 1) {
+      const d = document.createElement('button'); d.className = 'prof del'; d.style.width = 'auto'; d.textContent = 'Delete';
+      d.onclick = () => { profiles = profiles.filter(x => x.id !== p.id); store.set('sv_profiles', profiles); showProfiles(true); };
+      wrap.appendChild(d);
+    }
+    list.appendChild(wrap);
+  });
+  if (profiles.length < 5) {
+    const add = document.createElement('div');
+    add.innerHTML = `<button class="prof add" id="padd"><span class="avatar">+</span><span>Add profile</span></button>
+      <form id="pform" hidden style="display:flex;flex-direction:column;gap:8px;width:150px"><input id="pname" class="select" maxlength="16" placeholder="Name" aria-label="Profile name"><button class="btn red" style="justify-content:center">Save</button></form>`;
+    list.appendChild(add);
+    $('#padd').onclick = () => { $('#padd').hidden = true; $('#pform').hidden = false; $('#pname').focus(); };
+    $('#pform').onsubmit = e => {
+      e.preventDefault(); const name = $('#pname').value.trim(); if (!name) return;
+      profiles.push({ id: 'p' + Date.now(), name, color: COLORS[profiles.length % COLORS.length] });
+      store.set('sv_profiles', profiles); showProfiles(manage);
+    };
+  }
+  $('#pmanage').onclick = () => showProfiles(!manage);
+}
+
+/* ---------- shell ---------- */
+function shell() {
+  $('#app').innerHTML = `
+  <header class="nav pad" id="nav">
+    <a class="logo" href="#home">Stream<span>Verse</span></a>
+    <ul class="nav-links">
+      <li><a href="#home">Home</a></li><li><a href="#tv">TV Shows</a></li><li><a href="#movies">Movies</a></li>
+      <li><a href="#new">New &amp; Popular</a></li><li><a href="#free">Free to Watch</a></li><li><a href="#list">My List</a></li>
+    </ul>
+    <div class="nav-right">
+      <label class="search">${ICON.search}<input id="q" type="search" placeholder="Search" aria-label="Search"></label>
+      <select class="region" id="region" aria-label="Country for where to watch">${Object.entries(REGIONS).map(([c, n]) => `<option value="${c}" ${c === REGION ? 'selected' : ''}>${c}</option>`).join('')}</select>
+      <button class="avatar" id="me" style="background:${profile.color}" aria-label="Profile menu">${esc(profile.name[0]?.toUpperCase() || '?')}</button>
+    </div>
+    <div class="menu" id="menu" hidden>
+      <button data-act="profiles">Switch profile</button>
+      <button data-act="key">${KEY ? 'Change TMDB key' : 'Connect TMDB key'}</button>
+      <hr><button data-act="clear">Clear my list and ratings</button>
+    </div>
+  </header>
+  <main id="main"></main>
+  <footer class="pad">
+    <div class="logo" style="font-size:1.1rem">Stream<span>Verse</span></div>
+    <div>Movie and TV data from <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</div>
+    <div>Where-to-watch data by <a href="https://www.justwatch.com" target="_blank" rel="noopener">JustWatch</a>. Free films from the <a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a> (public domain and openly licensed).</div>
+    <div>Full movie and series playback is provided by third-party embed servers. StreamVerse does not host or store any video files.</div>
+  </footer>`;
+  const nav = $('#nav');
+  addEventListener('scroll', () => nav.classList.toggle('solid', scrollY > 40), { passive: true });
+  $('#region').onchange = e => { REGION = e.target.value; store.set('sv_region', REGION); toast('Showing where to watch in ' + REGIONS[REGION]); };
+  $('#me').onclick = e => { e.stopPropagation(); $('#menu').hidden = !$('#menu').hidden; };
+  document.addEventListener('click', () => { const m = $('#menu'); if (m) m.hidden = true; });
+  $('#menu').onclick = e => {
+    const a = e.target.closest('button')?.dataset.act;
+    if (a === 'profiles') showProfiles();
+    if (a === 'key') { store.set('sv_skipkey', false); showSetup(); }
+    if (a === 'clear') { store.set(pkey('list'), []); store.set(pkey('rate'), {}); store.set(pkey('hist'), []); toast('Cleared'); route(); }
+  };
+  const q = $('#q');
+  q.oninput = debounce(() => { const v = q.value.trim(); if (v) { if (location.hash !== '#search') location.hash = 'search'; else route(); } else if (location.hash === '#search') location.hash = 'home'; }, 350);
+}
+
+/* ---------- cards & rows ---------- */
+function makeCard(it, type) {
+  type = it.media_type || type;
+  if (type === 'person' || !it.id) return null;
+  const title = it.title || it.name || 'Untitled';
+  const el = document.createElement('button');
+  el.className = 'card';
+  el.setAttribute('aria-label', title);
+  const score = it.vote_average ? `<span class="score">${Math.round(it.vote_average * 10)}% match</span> · ` : '';
+  const isNew = (it.release_date || it.first_air_date || '') >= new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+  el.innerHTML = (it.poster_path ? `<img loading="lazy" src="${img(it.poster_path)}" alt="">` : `<div class="noimg">${esc(title)}</div>`)
+    + (isNew ? '<span class="badge">New</span>' : '')
+    + `<div class="info"><b>${esc(title)}</b><span>${score}${esc(yearOf(it))}${type === 'tv' ? ' · Series' : ''}</span></div>`;
+  el.onclick = () => openDetails(type, it.id);
+  return el;
+}
+function makeTopCard(it, type, i) {
+  type = it.media_type || type;
+  const el = document.createElement('button'); el.className = 'card top';
+  el.setAttribute('aria-label', `Number ${i + 1}: ${it.title || it.name}`);
+  el.innerHTML = `<span class="num">${i + 1}</span><span class="p">${it.poster_path ? `<img loading="lazy" src="${img(it.poster_path)}" alt="">` : `<span class="noimg">${esc(it.title || it.name)}</span>`}</span>`;
+  el.onclick = () => openDetails(type, it.id);
+  return el;
+}
+function makeFreeCard(d) {
+  const el = document.createElement('button'); el.className = 'card wide';
+  el.setAttribute('aria-label', d.title);
+  const pr = progress()[d.identifier];
+  const pct = pr && pr.d ? Math.min(100, Math.round(pr.t / pr.d * 100)) : 0;
+  const left = pr && pr.d ? Math.max(1, Math.round((pr.d - pr.t) / 60)) + ' min left' : 'Full movie';
+  el.innerHTML = `<img loading="lazy" src="https://archive.org/services/img/${esc(d.identifier)}" alt=""><span class="badge free">Plays here</span><div class="info"><b>${esc(d.title)}</b><span>${esc(d.year || '')}${d.year ? ' · ' : ''}${left}</span></div>${pct ? `<span class="prog"><i style="width:${pct}%"></i></span>` : ''}`;
+  el.onclick = () => openFree(d);
+  return el;
+}
+function row(title, loader, opts = {}) {
+  const sec = document.createElement('section'); sec.className = 'row pad';
+  sec.innerHTML = `<h2>${esc(title)}</h2><div class="track-wrap"><button class="arrow l" aria-label="Scroll left">‹</button><div class="track"></div><button class="arrow r" aria-label="Scroll right">›</button></div>`;
+  const track = $('.track', sec);
+  track.innerHTML = `<div class="skel ${opts.wide ? 'wide' : ''}"></div>`.repeat(8);
+  $('.arrow.l', sec).onclick = () => track.scrollBy({ left: -track.clientWidth * .85 });
+  $('.arrow.r', sec).onclick = () => track.scrollBy({ left: track.clientWidth * .85 });
+  Promise.resolve().then(loader).then(items => {
+    track.innerHTML = '';
+    (items || []).forEach((it, i) => { const c = (opts.make || makeCard)(it, opts.type, i); if (c) track.appendChild(c); });
+    if (!track.children.length) sec.remove();
+  }).catch(e => { handleErr(e); sec.remove(); });
+  return sec;
+}
+let io = null;
+function infiniteGrid(parent, fetchPage, make, wide = false) {
+  if (io) io.disconnect();
+  const grid = document.createElement('div'); grid.className = 'grid' + (wide ? ' wide' : '');
+  const sentinel = document.createElement('div'); sentinel.className = 'sentinel';
+  parent.append(grid, sentinel);
+  let page = 1, total = 1, busy = false, token = {};
+  const myToken = token;
+  async function load() {
+    if (busy || page > total) return; busy = true;
+    try {
+      const r = await fetchPage(page);
+      if (!grid.isConnected) return;
+      total = Math.min(r.total || 1, 500);
+      r.items.forEach((it, i) => { const c = make(it, i); if (c) grid.appendChild(c); });
+      page++;
+      if (!grid.children.length) grid.outerHTML = '<p class="empty">Nothing found. Try another search or filter.</p>';
+    } catch (e) { handleErr(e); total = 0; }
+    busy = false;
+    if (page <= total && sentinel.getBoundingClientRect().top < innerHeight + 600) load();
+  }
+  io = new IntersectionObserver(en => { if (en[0].isIntersecting) load(); }, { rootMargin: '600px' });
+  io.observe(sentinel); load();
+}
+const needKey = () => `<div class="notice"><h3>Connect TMDB to see the full catalog</h3><p class="small" style="font-size:.9rem">Movies and series come from TMDB. Add your free key to unlock them. Free to Watch works without a key.</p><button class="btn red" onclick="store.set('sv_skipkey',false);showSetup()">Add TMDB key</button></div>`;
+
+/* ---------- views ---------- */
+const MOVIE_GENRES = [[28,'Action'],[12,'Adventure'],[16,'Animation'],[35,'Comedy'],[80,'Crime'],[99,'Documentary'],[18,'Drama'],[10751,'Family'],[14,'Fantasy'],[36,'History'],[27,'Horror'],[10402,'Music'],[9648,'Mystery'],[10749,'Romance'],[878,'Sci-Fi'],[53,'Thriller'],[10752,'War'],[37,'Western']];
+const TV_GENRES = [[10759,'Action & Adventure'],[16,'Animation'],[35,'Comedy'],[80,'Crime'],[99,'Documentary'],[18,'Drama'],[10751,'Family'],[10762,'Kids'],[9648,'Mystery'],[10764,'Reality'],[10765,'Sci-Fi & Fantasy'],[10766,'Soap'],[10768,'War & Politics'],[37,'Western']];
+const res = p => p.then(d => d.results);
+
+function viewHome(main) {
+  const rows = document.createElement('div'); rows.className = 'rows';
+  if (!KEY) {
+    main.innerHTML = `<div class="page pad">${needKey()}</div>`;
+    rows.style.marginTop = '0';
+  } else {
+    main.appendChild(hero());
+  }
+  main.appendChild(rows);
+  const hist = history();
+  if (hist.length) rows.appendChild(row('Continue Watching', () => hist, { make: makeFreeCard, wide: true }));
+  if (KEY) {
+    rows.appendChild(row('Trending Now', () => res(tmdb('/trending/all/week'))));
+    rows.appendChild(row('Top 10 Movies Today', () => res(tmdb('/trending/movie/day')).then(r => r.slice(0, 10)), { make: makeTopCard, type: 'movie' }));
+    rows.appendChild(row(`Watch Free Now: Movies in ${REGIONS[REGION]}`, () => res(tmdb('/discover/movie', { ...freeParams(), 'vote_count.gte': 100 })), { type: 'movie', make: makeFreeTmdbCard }));
+    rows.appendChild(row('New Releases', () => res(tmdb('/movie/now_playing', { region: REGION })), { type: 'movie' }));
+    rows.appendChild(row('New Episodes This Week', () => res(tmdb('/tv/on_the_air')), { type: 'tv' }));
+    const list = myList().filter(x => x.type !== 'free');
+    if (list.length) rows.appendChild(row('My List', () => list.slice().reverse(), {}));
+    const liked = Object.values(ratings()).filter(r => r.v === 1).pop();
+    if (liked) rows.appendChild(row(`Because you liked ${liked.title}`, () => res(tmdb(`/${liked.type}/${liked.id}/recommendations`)), { type: liked.type }));
+    rows.appendChild(row('Popular TV Series', () => res(tmdb('/tv/popular')), { type: 'tv' }));
+    rows.appendChild(row(`Watch Free Now: Series in ${REGIONS[REGION]}`, () => res(tmdb('/discover/tv', { ...freeParams(), 'vote_count.gte': 50 })), { type: 'tv', make: makeFreeTmdbCard }));
+  }
+  rows.appendChild(row('Full Movies That Play Here', () => archive({ rows: 20 }).then(r => r.items), { make: makeFreeCard, wide: true }));
+  if (KEY) rows.appendChild(row('Free Action & Thrillers', () => res(tmdb('/discover/movie', { ...freeParams(), with_genres: '28|53', 'vote_count.gte': 50 })), { type: 'movie', make: makeFreeTmdbCard }));
+  rows.appendChild(row('Film Noir Classics · Plays Here', () => archive({ collection: FREE_COLLECTIONS[1][0], rows: 20 }).then(r => r.items), { make: makeFreeCard, wide: true }));
+  rows.appendChild(row('Sci-Fi & Horror · Plays Here', () => archive({ collection: FREE_COLLECTIONS[2][0], rows: 20 }).then(r => r.items), { make: makeFreeCard, wide: true }));
+  if (KEY) rows.appendChild(row('Free Family & Animation', () => res(tmdb('/discover/movie', { ...freeParams(), with_genres: '16|10751', 'vote_count.gte': 30 })), { type: 'movie', make: makeFreeTmdbCard }));
+  rows.appendChild(row('Westerns · Plays Here', () => archive({ collection: FREE_COLLECTIONS[4][0], rows: 20 }).then(r => r.items), { make: makeFreeCard, wide: true }));
+  if (KEY) {
+    rows.appendChild(row('Coming Soon', () => res(tmdb('/movie/upcoming', { region: REGION })), { type: 'movie' }));
+    rows.appendChild(row('Top Rated Movies', () => res(tmdb('/movie/top_rated')), { type: 'movie' }));
+    [[28,'Action'],[35,'Comedy'],[27,'Horror'],[878,'Sci-Fi'],[18,'Drama'],[16,'Animation'],[10749,'Romance'],[99,'Documentaries']].forEach(([g, n]) =>
+      rows.appendChild(row(n, () => res(tmdb('/discover/movie', { with_genres: g, sort_by: 'popularity.desc', 'vote_count.gte': 50 })), { type: 'movie' })));
+    rows.appendChild(row('Top Rated TV', () => res(tmdb('/tv/top_rated')), { type: 'tv' }));
+    rows.appendChild(row('Crime TV', () => res(tmdb('/discover/tv', { with_genres: 80, sort_by: 'popularity.desc' })), { type: 'tv' }));
+    rows.appendChild(row('Anime & Animation Series', () => res(tmdb('/discover/tv', { with_genres: 16, sort_by: 'popularity.desc' })), { type: 'tv' }));
+  }
+}
+
+let heroTimer;
+function hero() {
+  const h = document.createElement('section'); h.className = 'hero';
+  h.innerHTML = `<div class="hero-copy pad"><span class="eyebrow">Loading…</span></div>`;
+  res(tmdb('/trending/all/day')).then(list => {
+    const picks = list.filter(x => x.backdrop_path && x.media_type !== 'person').slice(0, 6);
+    if (!picks.length) return;
+    let i = 0;
+    h.innerHTML = picks.map((p, k) => `<img class="hero-bg ${k ? '' : 'show'}" src="${img(p.backdrop_path, 'original')}" alt="">`).join('')
+      + `<div class="hero-copy pad"></div><div class="dots">${picks.map((_, k) => `<button aria-label="Show title ${k + 1}" class="${k ? '' : 'on'}"></button>`).join('')}</div>`;
+    const show = k => {
+      i = k; const p = picks[k], type = p.media_type;
+      h.querySelectorAll('.hero-bg').forEach((im, n) => im.classList.toggle('show', n === k));
+      h.querySelectorAll('.dots button').forEach((b, n) => b.classList.toggle('on', n === k));
+      $('.hero-copy', h).innerHTML = `
+        <span class="eyebrow"><b>#${k + 1}</b> Trending today · ${type === 'tv' ? 'Series' : 'Film'}</span>
+        <h1>${esc(p.title || p.name)}</h1>
+        <div class="meta" style="margin-bottom:12px"><span class="score">${Math.round((p.vote_average || 0) * 10)}% match</span><span>${esc(yearOf(p))}</span></div>
+        <p>${esc(p.overview)}</p>
+        <div class="btns"><button class="btn green" data-a="play">${ICON.play} Play</button><button class="btn white" data-a="trailer">${ICON.play} Trailer</button><button class="btn grey" data-a="info">${ICON.info} More Info</button></div>`;
+      $('[data-a=play]', h).onclick = () => { if (type === 'tv') openDetails(type, p.id); else openEmbed('movie', p.id, p.title || p.name); };
+      $('[data-a=trailer]', h).onclick = () => playTrailer(type, p.id, p.title || p.name);
+      $('[data-a=info]', h).onclick = () => openDetails(type, p.id);
+    };
+    h.querySelectorAll('.dots button').forEach((b, n) => b.onclick = () => { show(n); restart(); });
+    const restart = () => { clearInterval(heroTimer); heroTimer = setInterval(() => { if (!h.isConnected) return clearInterval(heroTimer); if (!$('.modal-back') && !$('.player')) show((i + 1) % picks.length); }, 9000); };
+    show(0); restart();
+  }).catch(e => { handleErr(e); h.remove(); });
+  return h;
+}
+
+function viewBrowse(main, type) {
+  if (!KEY) return (main.innerHTML = `<div class="page pad">${needKey()}</div>`);
+  const genres = type === 'movie' ? MOVIE_GENRES : TV_GENRES;
+  const st = store.get('sv_browse_' + type, { g: '', sort: 'popular' });
+  const page = document.createElement('div'); page.className = 'page pad';
+  page.innerHTML = `<div class="page-head"><h1>${type === 'movie' ? 'Movies' : 'TV Shows'}</h1>
+    <select class="select" id="sort" aria-label="Sort by"><option value="popular">Most popular</option><option value="new">Newest first</option><option value="top">Top rated</option></select></div>
+    <div class="chips" id="chips"><button class="chip" data-g="">All</button>${genres.map(([id, n]) => `<button class="chip" data-g="${id}">${esc(n)}</button>`).join('')}</div>
+    <div id="out"></div>`;
+  main.appendChild(page);
+  $('#sort').value = st.sort;
+  const date = type === 'movie' ? 'primary_release_date' : 'first_air_date';
+  const go = () => {
+    store.set('sv_browse_' + type, st);
+    page.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.g === String(st.g)));
+    const out = $('#out'); out.innerHTML = '';
+    const params = { with_genres: st.g };
+    if (st.sort === 'popular') Object.assign(params, { sort_by: 'popularity.desc' });
+    if (st.sort === 'new') Object.assign(params, { sort_by: date + '.desc', [date + '.lte']: today(), 'vote_count.gte': 10 });
+    if (st.sort === 'top') Object.assign(params, { sort_by: 'vote_average.desc', 'vote_count.gte': 800 });
+    infiniteGrid(out, p => tmdb('/discover/' + type, { ...params, page: p }).then(d => ({ items: d.results, total: d.total_pages })), it => makeCard(it, type));
+  };
+  $('#chips').onclick = e => { const c = e.target.closest('.chip'); if (c) { st.g = c.dataset.g; go(); } };
+  $('#sort').onchange = e => { st.sort = e.target.value; go(); };
+  go();
+}
+
+function viewNew(main) {
+  if (!KEY) return (main.innerHTML = `<div class="page pad">${needKey()}</div>`);
+  const wrap = document.createElement('div'); wrap.className = 'rows'; wrap.style.marginTop = '0';
+  const head = document.createElement('div'); head.className = 'page pad'; head.style.paddingBottom = '0';
+  head.innerHTML = '<div class="page-head" style="margin:0"><h1>New &amp; Popular</h1></div>';
+  main.append(head, wrap);
+  wrap.append(
+    row('In Theaters Now', () => res(tmdb('/movie/now_playing', { region: REGION })), { type: 'movie' }),
+    row('Top 10 Series Today', () => res(tmdb('/trending/tv/day')).then(r => r.slice(0, 10)), { make: makeTopCard, type: 'tv' }),
+    row('Just Released Movies', () => res(tmdb('/discover/movie', { sort_by: 'primary_release_date.desc', 'primary_release_date.lte': today(), 'vote_count.gte': 15 })), { type: 'movie' }),
+    row('Airing Today', () => res(tmdb('/tv/airing_today')), { type: 'tv' }),
+    row('Coming Soon', () => res(tmdb('/movie/upcoming', { region: REGION })), { type: 'movie' }),
+    row('Trending This Week', () => res(tmdb('/trending/all/week', { page: 2 }))),
+    row('Popular Movies', () => res(tmdb('/movie/popular')), { type: 'movie' })
+  );
+}
+
+function viewFree(main) {
+  const st = { c: 'feature_films', q: '' };
+  const page = document.createElement('div'); page.className = 'page pad';
+  const services = KEY ? `<button class="chip svc" data-c="svc-movie">Free on Tubi &amp; more: Movies</button><button class="chip svc" data-c="svc-tv">Free on Tubi &amp; more: Series</button>` : '';
+  page.innerHTML = `<div class="page-head"><h1>Free to Watch</h1><span class="small" style="font-size:.9rem">"Plays here" films stream right on StreamVerse. "Free on Tubi &amp; more" titles open on free, ad-supported services in ${esc(REGIONS[REGION])}.</span></div>
+    <div class="page-head" style="margin-bottom:12px"><label class="search" style="width:min(340px,100%)">${ICON.search}<input id="fq" type="search" placeholder="Search free movies" aria-label="Search free movies"></label></div>
+    <div class="chips" id="fchips">${services}${FREE_COLLECTIONS.map(([c, n]) => `<button class="chip" data-c="${esc(c)}">${esc(n)}</button>`).join('')}</div><div id="fout"></div>`;
+  main.appendChild(page);
+  const go = () => {
+    page.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.c === st.c));
+    const out = $('#fout'); out.innerHTML = '';
+    $('#fq').closest('.page-head').hidden = st.c.startsWith('svc-');
+    if (st.c.startsWith('svc-')) {
+      const type = st.c.slice(4);
+      infiniteGrid(out, p => tmdb('/discover/' + type, { ...freeParams(), 'vote_count.gte': 20, page: p }).then(d => ({ items: d.results, total: d.total_pages })), it => makeFreeTmdbCard(it, type));
+    } else {
+      infiniteGrid(out, p => archive({ collection: st.c, q: st.q, page: p }), makeFreeCard, true);
+    }
+  };
+  $('#fchips').onclick = e => { const c = e.target.closest('.chip'); if (c) { st.c = c.dataset.c; go(); } };
+  $('#fq').oninput = debounce(e => { st.q = e.target.value; go(); }, 400);
+  go();
+}
+
+function viewList(main) {
+  const list = myList().slice().reverse();
+  const page = document.createElement('div'); page.className = 'page pad';
+  page.innerHTML = `<div class="page-head"><h1>My List</h1><span class="small" style="font-size:.9rem">${list.length} title${list.length === 1 ? '' : 's'}</span></div>`;
+  main.appendChild(page);
+  if (!list.length) { page.insertAdjacentHTML('beforeend', '<p class="empty">Your list is empty. Open any title and press + to save it here.</p>'); return; }
+  const grid = document.createElement('div'); grid.className = 'grid';
+  list.forEach(x => { const c = x.type === 'free' ? makeFreeCard(x) : makeCard(x, x.type); if (c) grid.appendChild(c); });
+  page.appendChild(grid);
+}
+
+function viewSearch(main) {
+  const q = ($('#q')?.value || '').trim();
+  if (!q) { location.hash = 'home'; return; }
+  const page = document.createElement('div'); page.className = 'page pad';
+  page.innerHTML = `<div class="page-head"><h1>Results for “${esc(q)}”</h1>
+    <select class="select" id="stype" aria-label="Type"><option value="multi">All</option><option value="movie">Movies</option><option value="tv">TV Shows</option></select>
+    <input class="select" id="syear" type="number" min="1900" max="2100" placeholder="Year" aria-label="Year" style="width:90px">
+    <select class="select" id="srate" aria-label="Minimum rating"><option value="0">Any rating</option><option value="6">6+</option><option value="7">7+</option><option value="8">8+</option></select></div>
+    <div id="sout"></div>`;
+  main.appendChild(page);
+  if (!KEY) { $('#sout').innerHTML = needKey(); return; }
+  const go = () => {
+    const type = $('#stype').value, year = $('#syear').value, min = +$('#srate').value;
+    const out = $('#sout'); out.innerHTML = '';
+    const params = { query: q, include_adult: false };
+    if (year && type === 'movie') params.primary_release_year = year;
+    if (year && type === 'tv') params.first_air_date_year = year;
+    infiniteGrid(out, p => tmdb('/search/' + type, { ...params, page: p }).then(d => {
+      let items = [];
+      d.results.forEach(r => { if (r.media_type === 'person') items.push(...(r.known_for || [])); else items.push(r); });
+      items = items.filter(r => (!min || r.vote_average >= min) && (!year || type !== 'multi' || yearOf(r) === year));
+      return { items, total: d.total_pages };
+    }), it => makeCard(it, type === 'multi' ? undefined : type));
+  };
+  ['stype', 'syear', 'srate'].forEach(id => $('#' + id).onchange = go);
+  go();
+}
+
+/* ---------- details modal ---------- */
+function openModal(html) {
+  closeModal();
+  const back = document.createElement('div'); back.className = 'modal-back';
+  back.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><button class="close" aria-label="Close">${ICON.x}</button>${html}</div>`;
+  back.onclick = e => { if (e.target === back || e.target.closest('.close')) closeModal(); };
+  $('#layer').appendChild(back);
+  document.body.style.overflow = 'hidden';
+  return $('.modal', back);
+}
+function closeModal() { const m = $('.modal-back'); if (m) m.remove(); if (!$('.player')) document.body.style.overflow = ''; }
+
+function listButton(entry) {
+  const b = document.createElement('button'); b.className = 'icon-btn';
+  const key = x => x.type + ':' + (x.id || x.identifier);
+  const sync = () => { const on = myList().some(x => key(x) === key(entry)); b.classList.toggle('on', on); b.innerHTML = on ? ICON.check : ICON.plus; b.title = on ? 'Remove from My List' : 'Add to My List'; b.setAttribute('aria-label', b.title); };
+  b.onclick = () => {
+    let l = myList(); const on = l.some(x => key(x) === key(entry));
+    l = on ? l.filter(x => key(x) !== key(entry)) : [...l, entry];
+    store.set(pkey('list'), l); sync(); toast(on ? 'Removed from My List' : 'Added to My List');
+  };
+  sync(); return b;
+}
+function rateButtons(type, id, title) {
+  const k = type + ':' + id;
+  const frag = document.createDocumentFragment();
+  const mk = (v, icon, label) => {
+    const b = document.createElement('button'); b.className = 'icon-btn'; b.innerHTML = icon; b.title = label; b.setAttribute('aria-label', label);
+    b.onclick = () => { const r = ratings(); if (r[k]?.v === v) delete r[k]; else { delete r[k]; r[k] = { v, type, id, title }; } store.set(pkey('rate'), r); sync(); if (r[k]) toast(v === 1 ? 'Thanks! We will recommend more like this.' : 'Got it. We will show less like this.'); };
+    return b;
+  };
+  const up = mk(1, ICON.up, 'I like this'), down = mk(-1, ICON.down, 'Not for me');
+  const sync = () => { const v = ratings()[k]?.v; up.classList.toggle('on', v === 1); down.classList.toggle('on', v === -1); };
+  sync(); frag.append(up, down); return frag;
+}
+
+async function openDetails(type, id) {
+  const modal = openModal('<div class="m-hero"></div><div class="m-body"><div class="skel" style="width:60%;height:24px;aspect-ratio:auto"></div><div class="skel" style="width:100%;height:80px;aspect-ratio:auto"></div></div>');
+  let d;
+  try {
+    d = await tmdb(`/${type}/${id}`, { append_to_response: `videos,${type === 'tv' ? 'aggregate_credits,content_ratings' : 'credits,release_dates'},recommendations,similar,watch/providers` });
+  } catch (e) { handleErr(e); closeModal(); return; }
+  if (!modal.isConnected) return;
+  const title = d.title || d.name;
+  let cert = '';
+  if (type === 'movie') { const r = (d.release_dates?.results || []); const c = r.find(x => x.iso_3166_1 === REGION) || r.find(x => x.iso_3166_1 === 'US'); cert = c?.release_dates.find(x => x.certification)?.certification || ''; }
+  else { const r = d.content_ratings?.results || []; cert = (r.find(x => x.iso_3166_1 === REGION) || r.find(x => x.iso_3166_1 === 'US'))?.rating || ''; }
+  const len = type === 'movie' ? (d.runtime ? `${Math.floor(d.runtime / 60)}h ${d.runtime % 60}m` : '') : `${d.number_of_seasons} Season${d.number_of_seasons === 1 ? '' : 's'}`;
+  const cast = (type === 'tv' ? d.aggregate_credits?.cast : d.credits?.cast) || [];
+  const director = type === 'movie' ? (d.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name).join(', ') : (d.created_by || []).map(c => c.name).join(', ');
+  const released = d.release_date || d.first_air_date;
+  const upcoming = released && released > today();
+  modal.innerHTML = `<button class="close" aria-label="Close">${ICON.x}</button>
+    <div class="m-hero">${d.backdrop_path ? `<img src="${img(d.backdrop_path, 'w1280')}" alt="">` : ''}
+      <div class="m-hero-copy"><h2>${esc(title)}</h2><div class="btns" id="mbtns"><button class="btn green" id="mwatch">${ICON.play} Play ${type === 'tv' ? 'Series' : 'Movie'}</button><button class="btn grey" id="mplay">${ICON.play} Trailer</button></div></div></div>
+    <div class="m-body">
+      <div class="m-top">
+        <div>
+          <div class="meta">${d.vote_average ? `<span class="score">${Math.round(d.vote_average * 10)}% match</span>` : ''}<span>${esc((released || '').slice(0, 4))}</span>${cert ? `<span class="cert">${esc(cert)}</span>` : ''}<span>${esc(len)}</span>${upcoming ? `<span class="cert" style="border-color:var(--red);color:#fff">Coming ${esc(new Date(released).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }))}</span>` : ''}${d.status && type === 'tv' ? `<span>${esc(d.status)}</span>` : ''}</div>
+          ${d.tagline ? `<p style="font-style:italic;color:var(--muted)">${esc(d.tagline)}</p>` : ''}
+          <p>${esc(d.overview || 'No description yet.')}</p>
+        </div>
+        <div class="kv">
+          ${cast.length ? `<div><b>Cast: </b><span>${esc(cast.slice(0, 5).map(c => c.name).join(', '))}</span></div>` : ''}
+          <div><b>Genres: </b><span>${esc((d.genres || []).map(g => g.name).join(', ') || '—')}</span></div>
+          ${director ? `<div><b>${type === 'movie' ? 'Director' : 'Created by'}: </b><span>${esc(director)}</span></div>` : ''}
+          ${d.original_language ? `<div><b>Language: </b><span>${esc(new Intl.DisplayNames(['en'], { type: 'language' }).of(d.original_language) || d.original_language)}</span></div>` : ''}
+          ${d.networks?.length ? `<div><b>Network: </b><span>${esc(d.networks.map(n => n.name).join(', '))}</span></div>` : ''}
+        </div>
+      </div>
+      <section id="where"></section>
+      ${type === 'tv' ? '<section id="episodes"></section>' : ''}
+      ${cast.length ? `<section><h3>Cast</h3><div class="cast">${cast.slice(0, 16).map(c => `<div class="person"><div class="ph">${c.profile_path ? `<img loading="lazy" src="${img(c.profile_path, 'w185')}" alt="">` : esc(c.name[0])}</div>${esc(c.name)}<i>${esc(c.character || c.roles?.[0]?.character || '')}</i></div>`).join('')}</div></section>` : ''}
+      <section id="morelike"></section>
+    </div>`;
+  const btns = $('#mbtns', modal);
+  btns.append(listButton({ type, id: d.id, title, poster_path: d.poster_path, vote_average: d.vote_average, release_date: d.release_date, first_air_date: d.first_air_date }), rateButtons(type, d.id, title));
+  const trailer = pickTrailer(d.videos?.results);
+  if (trailer) $('#mplay', modal).onclick = () => openPlayer(`https://www.youtube.com/embed/${trailer}?autoplay=1&rel=0&modestbranding=1&playsinline=1`, title + ' · Trailer');
+  else { $('#mplay', modal).disabled = true; $('#mplay', modal).innerHTML = 'No trailer yet'; $('#mplay', modal).style.opacity = .6; }
+  // Play the full movie/series from embed streaming servers
+  $('#mwatch', modal).onclick = () => {
+    if (type === 'tv') {
+      const seasons = (d.seasons || []).filter(s => s.season_number > 0 && s.episode_count > 0);
+      const last = seasons.length ? seasons[seasons.length - 1].season_number : 1;
+      openEmbed('tv', d.id, title, last, 1);
+    } else {
+      openEmbed('movie', d.id, title);
+    }
+  };
+
+  // where to watch
+  const wp = d['watch/providers']?.results?.[REGION];
+  const where = $('#where', modal);
+  const groups = [['flatrate', 'Stream'], ['free', 'Free'], ['ads', 'With ads'], ['rent', 'Rent'], ['buy', 'Buy']];
+  const link = wp?.link && /^https:\/\//.test(wp.link) ? wp.link : `https://www.themoviedb.org/${type}/${d.id}/watch?locale=${REGION}`;
+  const any = wp && groups.some(([g]) => wp[g]?.length);
+  // Big "Watch free" button when a free or ad-supported service has this title
+  const freeProv = wp?.free?.[0] || wp?.ads?.[0];
+  if (freeProv) {
+    const searchFn = FREE_SEARCH[freeProv.provider_name];
+    const href = searchFn ? searchFn(title) : link;
+    const a = document.createElement('a');
+    a.className = 'btn red'; a.href = href; a.target = '_blank'; a.rel = 'noopener';
+    a.innerHTML = ICON.play + ' ';
+    a.append('Watch free on ' + freeProv.provider_name);
+    btns.prepend(a);
+    const tb = $('#mplay', modal); tb.classList.replace('white', 'grey');
+    if (!tb.disabled) tb.innerHTML = ICON.play + ' Trailer';
+  }
+  where.innerHTML = `<h3>Where to watch in ${esc(REGIONS[REGION])}</h3>` + (any
+    ? `<div class="providers">${groups.filter(([g]) => wp[g]?.length).map(([g, n]) => `<div class="prov-group"><span>${n}</span>${wp[g].map(p => `<a class="prov" href="${esc(link)}" target="_blank" rel="noopener"><img loading="lazy" src="${img(p.logo_path, 'w92')}" alt="">${esc(p.provider_name)}</a>`).join('')}</div>`).join('')}</div><p class="small" style="margin-top:12px">Streaming availability by JustWatch. Change country with the selector at the top.</p>`
+    : `<p class="small" style="font-size:.9rem">${upcoming ? 'Not released yet. Check back after the release date.' : `No streaming options are listed for ${esc(REGIONS[REGION])} right now. Try another country in the top bar.`}</p>`);
+
+  // episodes
+  if (type === 'tv') {
+    const seasons = (d.seasons || []).filter(s => s.season_number > 0 && s.episode_count > 0);
+    const epBox = $('#episodes', modal);
+    if (!seasons.length) epBox.remove();
+    else {
+      epBox.innerHTML = `<div class="ep-head"><h3>Episodes</h3><select class="select" id="season" aria-label="Season">${seasons.map(s => `<option value="${s.season_number}">${esc(s.name)} (${s.episode_count} episodes)</option>`).join('')}</select></div><div class="eps" id="eps"></div>`;
+      const loadSeason = async n => {
+        const eps = $('#eps', modal); eps.innerHTML = '<div class="skel" style="width:100%;height:90px;aspect-ratio:auto"></div>';
+        try {
+          const s = await tmdb(`/tv/${d.id}/season/${n}`);
+          eps.innerHTML = s.episodes.map(e => `<div class="ep"><div class="n">${e.episode_number}</div><div class="st" data-ep="${e.episode_number}" role="button" tabindex="0" aria-label="Play episode ${e.episode_number}">${e.still_path ? `<img loading="lazy" src="${img(e.still_path, 'w300')}" alt="">` : ''}</div><div><h4>${esc(e.name)}<span>${e.runtime ? e.runtime + 'm' : esc(e.air_date || '')}</span></h4><p>${esc(e.overview || (e.air_date > today() ? 'Airs ' + e.air_date : ''))}</p></div></div>`).join('') || '<p class="empty">No episode details yet.</p>';
+          eps.querySelectorAll('.st').forEach(st => {
+            const play = () => openEmbed('tv', d.id, title, n, +st.dataset.ep);
+            st.onclick = play;
+            st.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); play(); } };
+          });
+        } catch (e) { handleErr(e); }
+      };
+      const last = seasons[seasons.length - 1].season_number;
+      $('#season', modal).value = last;
+      $('#season', modal).onchange = e => loadSeason(e.target.value);
+      loadSeason(last);
+    }
+  }
+  // more like this
+  const more = (d.recommendations?.results?.length ? d.recommendations.results : d.similar?.results || []).slice(0, 12);
+  if (more.length) {
+    const sec = $('#morelike', modal); sec.innerHTML = '<h3>More Like This</h3><div class="more"></div>';
+    more.forEach(it => { const c = makeCard(it, type); if (c) $('.more', sec).appendChild(c); });
+  }
+}
+function pickTrailer(vids = []) {
+  const yt = vids.filter(v => v.site === 'YouTube' && /^[\w-]{6,20}$/.test(v.key));
+  const v = yt.find(v => v.type === 'Trailer' && v.official) || yt.find(v => v.type === 'Trailer') || yt.find(v => v.type === 'Teaser') || yt[0];
+  return v?.key;
+}
+async function playTrailer(type, id, title) {
+  try { const d = await tmdb(`/${type}/${id}/videos`); const k = pickTrailer(d.results); if (!k) return toast('No trailer available for this title yet.'); openPlayer(`https://www.youtube.com/embed/${k}?autoplay=1&rel=0&modestbranding=1&playsinline=1`, title + ' · Trailer'); }
+  catch (e) { handleErr(e); }
+}
+
+function openFree(doc) {
+  const desc = plain(doc.description);
+  const modal = openModal(`
+    <div class="m-hero"><img src="https://archive.org/services/img/${esc(doc.identifier)}" alt="" style="object-fit:contain;background:#000">
+      <div class="m-hero-copy"><h2>${esc(doc.title)}</h2><div class="btns" id="fbtns"><button class="btn white" id="fplay">${ICON.play} Play Movie</button></div></div></div>
+    <div class="m-body"><div><div class="meta"><span class="score">Free</span><span>${esc(doc.year || '')}</span><span class="cert">Full movie</span></div>
+      <p style="color:#e4e4e7">${esc(desc.length > 900 ? desc.slice(0, 900) + '…' : desc || 'No description available.')}</p>
+      <p class="small">Hosted by the Internet Archive. <a href="https://archive.org/details/${esc(doc.identifier)}" target="_blank" rel="noopener">View on archive.org</a></p></div></div>`);
+  $('#fbtns', modal).append(listButton({ type: 'free', identifier: doc.identifier, title: doc.title, year: doc.year }));
+  const pr = progress()[doc.identifier];
+  if (pr && pr.t > 30) $('#fplay', modal).innerHTML = `${ICON.play} Resume from ${fmtTime(pr.t)}`;
+  $('#fplay', modal).onclick = () => {
+    const h = history().filter(x => x.identifier !== doc.identifier);
+    h.unshift({ identifier: doc.identifier, title: doc.title, year: doc.year, description: desc.slice(0, 600) });
+    store.set(pkey('hist'), h.slice(0, 20));
+    playFree(doc);
+  };
+}
+const fmtTime = s => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = String(s % 60).padStart(2, '0'); return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`; };
+
+/* Plays the film's MP4 in our own player (with resume). Falls back to the Internet Archive's embedded player. */
+async function playFree(doc) {
+  const id = doc.identifier;
+  let file = null;
+  try {
+    const m = await fetch(`https://archive.org/metadata/${id}`).then(r => r.json());
+    const mp4 = (m.files || []).filter(f => /\.mp4$/i.test(f.name) && !/sample|trailer/i.test(f.name));
+    file = mp4.find(f => /^h\.264$/i.test(f.format)) || mp4.find(f => /h\.264/i.test(f.format) && !/hd/i.test(f.format)) || mp4.find(f => /mpeg4/i.test(f.format)) || mp4[0] || null;
+  } catch {}
+  if (!file) return openPlayer(`https://archive.org/embed/${id}?autoplay=1`, doc.title);
+  const src = `https://archive.org/download/${id}/${file.name.split('/').map(encodeURIComponent).join('/')}`;
+  openVideo(src, doc.title, id, () => openPlayer(`https://archive.org/embed/${id}?autoplay=1`, doc.title));
+}
+
+function playerShell(title, opts = {}) {
+  closePlayer();
+  const p = document.createElement('div'); p.className = 'player';
+  const sbar = opts.servers && opts.servers.length
+    ? `<div class="server-bar"><span class="lbl">Server:</span>${opts.servers.map((s, i) => `<button class="chip svc${i === 0 ? ' on' : ''}" data-s="${esc(s.id)}">${esc(s.name)}</button>`).join('')}</div>`
+    : '';
+  p.innerHTML = `<div class="player-bar"><button class="icon-btn" data-a="back" aria-label="Back">${ICON.back}</button><b></b><button class="icon-btn" data-a="fs" aria-label="Fullscreen" title="Fullscreen" style="margin-left:auto">${ICON.fs}</button></div>${sbar}`;
+  $('b', p).textContent = title;
+  $('[data-a=back]', p).onclick = closePlayer;
+  $('[data-a=fs]', p).onclick = () => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else (p.requestFullscreen ? p.requestFullscreen() : Promise.reject()).catch(() => toast('Fullscreen is not available in this browser. Use the player\'s own fullscreen button.'));
+  };
+  if (opts.onServer) {
+    p.querySelectorAll('.server-bar .chip').forEach(c => c.onclick = () => {
+      p.querySelectorAll('.server-bar .chip').forEach(x => x.classList.toggle('on', x === c));
+      opts.onServer(c.dataset.s);
+    });
+  }
+  document.body.appendChild(p); document.body.style.overflow = 'hidden';
+  return p;
+}
+/* Replace the current iframe/video inside a player with a new source (used when switching servers) */
+function setPlayerSrc(p, src) {
+  p.querySelectorAll('iframe, video').forEach(el => el.remove());
+  p.insertAdjacentHTML('beforeend', `<iframe src="${esc(src)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="origin"></iframe>`);
+}
+/* Open a movie or TV episode using embed streaming servers, with a server selector in the player bar */
+function openEmbed(type, id, title, season, episode) {
+  const list = SERVERS[type] || SERVERS.movie;
+  const buildSrc = s => {
+    const srv = list.find(x => x.id === s) || list[0];
+    return type === 'tv' ? srv.url(id, season, episode) : srv.url(id);
+  };
+  const label = title + (type === 'tv' ? ` · S${season} E${episode}` : '');
+  const p = playerShell(label, {
+    servers: list,
+    onServer: sid => { setPlayerSrc(p, buildSrc(sid)); toast('Switched server — if it still won\'t load, try another.'); }
+  });
+  setPlayerSrc(p, buildSrc(list[0].id));
+  toast('If the video doesn\'t load, pick another server in the bar above.');
+}
+function openPlayer(src, title) {
+  const p = playerShell(title);
+  p.insertAdjacentHTML('beforeend', `<iframe src="${esc(src)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>`);
+}
+function openVideo(src, title, id, onFail) {
+  const p = playerShell(title);
+  const v = document.createElement('video');
+  v.controls = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.src = src;
+  p.appendChild(v);
+  const saved = progress()[id];
+  v.addEventListener('loadedmetadata', () => {
+    if (saved && saved.t > 30 && saved.t < v.duration - 60) { v.currentTime = saved.t; toast('Resuming from ' + fmtTime(saved.t)); }
+  }, { once: true });
+  let last = 0;
+  const save = (force) => {
+    if (!v.duration || (!force && Date.now() - last < 5000)) return;
+    last = Date.now();
+    const all = progress();
+    if (v.currentTime > v.duration - 60) delete all[id]; else all[id] = { t: Math.floor(v.currentTime), d: Math.floor(v.duration) };
+    store.set(pkey('prog'), all);
+  };
+  v.addEventListener('timeupdate', () => save(false));
+  v.addEventListener('pause', () => save(true));
+  v.addEventListener('ended', () => save(true));
+  v.addEventListener('error', () => { if (v.isConnected && onFail) onFail(); }, { once: true });
+  p._save = () => save(true);
+}
+function closePlayer() {
+  const p = $('.player');
+  if (p) { if (p._save) p._save(); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); p.remove(); if ((location.hash.slice(1) || 'home') === 'home' && p._save) route(); }
+  if (!$('.modal-back')) document.body.style.overflow = '';
+}
+
+/* ---------- routing ---------- */
+const VIEWS = { home: viewHome, tv: m => viewBrowse(m, 'tv'), movies: m => viewBrowse(m, 'movie'), new: viewNew, free: viewFree, list: viewList, search: viewSearch };
+function route() {
+  if (!$('#main')) return;
+  const name = location.hash.slice(1) || 'home';
+  const v = VIEWS[name] || viewHome;
+  if (io) { io.disconnect(); io = null; }
+  clearInterval(heroTimer);
+  closeModal();
+  const main = $('#main'); main.innerHTML = '';
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + name));
+  if (name !== 'search') scrollTo(0, 0);
+  v(main);
+}
+addEventListener('hashchange', route);
+addEventListener('keydown', e => { if (e.key === 'Escape') { if ($('.player')) closePlayer(); else closeModal(); } });
+
+function boot(chosen = false) {
+  if (!KEY && !store.get('sv_skipkey', false)) return showSetup();
+  if (!chosen) {
+    const last = profiles.find(p => p.id === store.get('sv_last', ''));
+    if (profiles.length > 1 || !last) { if (profiles.length === 1) { profile = profiles[0]; } else return showProfiles(); }
+    else profile = last;
+  }
+  if (!profile) profile = profiles[0];
+  shell(); route();
+}
+boot();
+</script>
+</body>
+</html>
